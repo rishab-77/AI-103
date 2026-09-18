@@ -12,7 +12,7 @@
 
 This repository is under active development. Build window: Sept 18 – 23, 2026. Final presentations: Sept 24–25.
 
-The architecture described below is deliberately scoped to what a 5-person team can build, integrate, test and explain within this window. It favors one well-implemented routing agent over multiple thin agent modules, and a small hand-verified evaluation set over a large automated one.
+The architecture described below is a 3-agent system (Academic, Student Services, General FAQ) plus an LLM-based orchestrator for routing — following Priyansh's Foundry Agents SDK implementation plan (`azure-ai-projects`, `AzureAISearchTool`, per-agent instruction files). This is heavier than a single-agent design, but shared infrastructure (client, search tool, thread/run lifecycle) is reused across all three agents, so the marginal cost of 3 agents over 1 is mainly the instruction files and routing tests, not 3x the integration work.
 
 Major architectural changes must be discussed with the team before implementation.
 
@@ -49,9 +49,9 @@ We are building a **University FAQ Multi-Agent System**.
 
 A student asks a question through a web interface.
 
-The backend passes the query to a single FAQ agent. That agent first classifies the query into a domain (academic / student services / general) using a lightweight routing step, then uses that domain to filter retrieval against a shared university knowledge base.
+The backend passes the query to an **orchestrator agent** (a Foundry agent with a classification-only prompt and no tools). The orchestrator classifies the query into a domain — academic, student services, or general — and delegates it to the matching specialized agent.
 
-The retrieved evidence is then used to generate a grounded response containing citations to the supporting source material.
+Each specialized agent is wired to a shared university knowledge index via `AzureAISearchTool` and generates a grounded response with citations from the retrieved evidence.
 
 Conceptually:
 
@@ -62,16 +62,18 @@ React Client
    ↓
 FastAPI Backend
    ↓
-FAQ Agent (domain classification → retrieval → generation)
+Orchestrator Agent (LLM classifier, no tools)
    ↓
-Knowledge / Retrieval Layer
+Academic / Student Services / General FAQ Agent
+   ↓
+AzureAISearchTool → Knowledge / Retrieval Layer
    ↓
 Official University Sources
    ↓
 Grounded Answer + Citations
 ```
 
-**Why one agent instead of three:** with a 5-person team and a ~5-day build window, three independently engineered agents plus an orchestrator multiplies integration and testing surface without adding grading value — "multi-agent" as a concept is satisfied by domain-aware routing and retrieval filtering inside one agent, evaluated the same way a 3-agent system would be. If time remains after the core loop works end-to-end (see Section 19), splitting into separate agent modules is a stretch goal, not a baseline requirement.
+**Why 3 agents + an orchestrator, not one routing agent:** the client, search tool wiring, and thread/run lifecycle are built once and reused across all three specialized agents (see `backend/agents/client.py`, `tools.py`, `runner.py`), so the marginal engineering cost of separate agents is mainly writing 3 focused instruction files instead of 1 and a few extra routing test cases — not 3x the integration surface. This gives each agent a narrower, easier-to-verify scope than one agent trying to hold all three domains' instructions at once.
 
 ---
 
@@ -177,13 +179,13 @@ The system should handle cases such as:
 
 ---
 
-# 7. Agent Design: Domains and Routing
+# 7. Planned Agent Responsibilities
 
-The system uses **one FAQ agent** with an internal routing step, rather than separate agent processes per domain. The domains below define how queries are classified and how retrieval is filtered — not separate codebases.
+Each agent below is a real Foundry agent (`project_client.agents.create_agent()`) with its own instruction file under `backend/agents/instructions/`, wired to `AzureAISearchTool`. Instruction files are kept in separate `.md` files for easy review and iteration.
 
-### 🎓 Academic domain
+### 🎓 Academic Agent
 
-Covers:
+Responsible for academic-policy questions such as:
 
 - attendance
 - examinations
@@ -192,9 +194,9 @@ Covers:
 - academic calendars
 - course-related policies
 
-### 🏫 Student services domain
+### 🏫 Student Services Agent
 
-Covers:
+Responsible for student-life and university-service questions such as:
 
 - hostel rules
 - leave procedures
@@ -202,15 +204,15 @@ Covers:
 - student facilities
 - administrative student processes
 
-### 💬 General domain
+### 💬 General FAQ Agent
 
-Covers university questions that don't clearly fall into the above but are still supported by the approved knowledge base.
+Handles general university questions that do not clearly belong to another specialized domain but are still supported by the approved knowledge base.
 
-### 🧭 Routing step
+### 🧭 Orchestrator
 
-A lightweight classification step (prompt-based or simple intent tagging) assigns an incoming query to one of the three domains. That domain tag is used purely to filter retrieval against the knowledge base metadata — it does not invoke a separate agent. The routing step should coordinate retrieval scope rather than act as an unrestricted source of university facts.
+A Foundry agent with a classification-only system prompt and **no tools**. Determines which specialized agent should handle an incoming query and returns a structured routing decision (`academic` / `student_services` / `general_faq`). The orchestrator coordinates routing rather than acting as an unrestricted source of university facts.
 
-> **Stretch goal:** if the core system is working reliably well before the Sept 23 deadline, the routing step can be split into genuinely separate agent modules (see Section 21 principle: build the simplest thing that works, then improve it based on evidence).
+Each agent's instructions include: role definition and scope boundaries, an instruction to answer only from retrieved context (grounding), an instruction to cite sources with document title/page/URL, an instruction to decline when no relevant information is found, and responsible-AI guardrails (no personal data, no speculation, no policy invention).
 
 ---
 
@@ -300,13 +302,20 @@ Where possible, the knowledge pipeline should track document dates or versions.
            │
            ▼
 ┌─────────────────────┐
-│      FAQ Agent      │
-│  (domain routing →  │
-│   retrieval filter) │
+│ Orchestrator Agent  │
+│  (LLM classifier)   │
 └──────────┬──────────┘
+           │
+     ┌─────┼───────────┐
+     ▼     ▼           ▼
+ Academic Student    General
+  Agent   Services    FAQ
+          Agent       Agent
+     └─────┬───────────┘
            │
            ▼
 ┌─────────────────────┐
+│ AzureAISearchTool /  │
 │ Knowledge/RAG Layer │
 └──────────┬──────────┘
            │
@@ -332,14 +341,22 @@ A detailed architecture diagram will be maintained separately as the design is f
 
 - Python
 - FastAPI
+- `azure-ai-projects` SDK (`AIProjectClient.agents`) for agent creation, threads, and runs
+- `azure-identity` (`DefaultAzureCredential`) — no API keys in code
 
 ### AI / Agent Layer
 
-- Microsoft Foundry (hosted model for generation and the FAQ agent's routing/classification step)
+- Microsoft Foundry — orchestrator agent (classifier, no tools) + 3 specialized agents (Academic, Student Services, General FAQ)
+- `AzureAISearchTool` (built into the agents SDK) wired to each specialized agent — no custom retrieval code needed
 
 ### Retrieval / Knowledge Layer
 
 - Azure AI Search (index + retrieval over the university document corpus)
+
+### Security / Safety Layer
+
+- 3-layer input validation: basic checks → regex prompt-injection patterns → Azure AI Content Safety (Prompt Shields)
+- Output guard: strip leaked system-prompt content, enforce citation presence, flag possible fabrication, attach standard disclaimer
 
 ### Deployment
 
@@ -356,12 +373,32 @@ Services are locked in now rather than left open, so no build day is lost to re-
 university-faq-agent/
 │
 ├── backend/
-│   ├── api/
+│   ├── config.py
+│   ├── main.py
+│   ├── requirements.txt
 │   ├── agents/
-│   ├── rag/
-│   ├── services/
+│   │   ├── client.py
+│   │   ├── tools.py
+│   │   ├── registry.py
+│   │   ├── orchestrator.py
+│   │   ├── runner.py
+│   │   └── instructions/
+│   │       ├── orchestrator.md
+│   │       ├── academic_agent.md
+│   │       ├── student_services_agent.md
+│   │       └── general_faq_agent.md
+│   ├── api/
+│   │   └── routes.py
 │   ├── models/
+│   │   └── schemas.py
+│   ├── services/
+│   │   ├── safety.py
+│   │   └── output_guard.py
+│   ├── rag/
 │   └── tests/
+│       ├── test_routing.py
+│       ├── test_safety.py
+│       └── test_end_to_end.py
 │
 ├── frontend/
 │
@@ -376,7 +413,8 @@ university-faq-agent/
 │
 ├── docs/
 │   ├── architecture.md
-│   └── security.md
+│   ├── SECURITY.md
+│   └── RESPONSIBLE_AI.md
 │
 ├── .env.example
 ├── .gitignore
@@ -431,11 +469,11 @@ Responsibilities:
 
 Responsibilities:
 
-- specialized agents
-- orchestrator
-- routing
-- agent instructions
-- knowledge integration
+- orchestrator agent (LLM classifier, no tools)
+- 3 specialized agents (Academic, Student Services, General FAQ) via `azure-ai-projects`
+- `AzureAISearchTool` wiring per agent
+- agent instruction files
+- thread/run lifecycle handling
 - fallback behavior
 
 ### Frontend
@@ -668,11 +706,11 @@ while also demonstrating:
 
 | AI-103 Concept | Where it lives in this project |
 |---|---|
-| Retrieval-Augmented Generation (RAG) | `backend/rag/` — ingestion, chunking, indexing, retrieval, grounded generation |
-| Agents & tools | `backend/agents/` — FAQ agent with domain-routing tool and retrieval tool |
-| Orchestration / multi-agent concept | Domain classification step inside the FAQ agent, filtering retrieval by domain (see Section 7) |
-| Responsible AI | Grounded-refusal behavior (Section 18), `docs/security.md`, `RESPONSIBLE_AI.md` |
-| Azure AI services | Microsoft Foundry (generation/routing), Azure AI Search (retrieval) — see Section 11 |
+| Retrieval-Augmented Generation (RAG) | `backend/rag/` (ingestion, indexing) + `AzureAISearchTool` per agent (`backend/agents/tools.py`) |
+| Agents & tools | `backend/agents/registry.py` — 3 Foundry agents, each with `AzureAISearchTool` |
+| Multi-agent orchestration | `backend/agents/orchestrator.py` — LLM-based classifier routes to the correct specialized agent |
+| Responsible AI | Grounded-refusal instructions per agent, `docs/SECURITY.md`, `docs/RESPONSIBLE_AI.md`, 3-layer input validation |
+| Azure AI services | Microsoft Foundry (agents, orchestrator), Azure AI Search (retrieval), Azure AI Content Safety (Prompt Shields) |
 
 # 22. Current Development Principle
 
