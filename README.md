@@ -1,6 +1,6 @@
-# AI-103
-University FAQ Multi-Agent - Multi-agent, RAG, orchestration Agent Framework, Foundry IQ, AI Search
 # 🎓 University FAQ Multi-Agent System
+
+**AI-103 Group Project** · Chitkara University · Topic: University FAQ Multi-Agent (Multi-agent, RAG, orchestration — Microsoft Agent Framework, Foundry IQ, AI Search)
 
 > An AI-powered university information assistant that uses multi-agent orchestration and Retrieval-Augmented Generation (RAG) to answer student questions using official university sources with grounded responses and citations.
 
@@ -8,11 +8,11 @@ University FAQ Multi-Agent - Multi-agent, RAG, orchestration Agent Framework, Fo
 
 ## 📌 Project Status
 
-**Current Phase:** Architecture & Foundation
+**Current Phase:** Build (started September 18, 2026)
 
-This repository is under active development.
+This repository is under active development. Build window: Sept 18 – 23, 2026. Final presentations: Sept 24–25.
 
-The architecture described below represents the current agreed project direction. Some implementation details, Azure services, APIs, and agent boundaries may evolve as the architecture is validated.
+The architecture described below is deliberately scoped to what a 5-person team can build, integrate, test and explain within this window. It favors one well-implemented routing agent over multiple thin agent modules, and a small hand-verified evaluation set over a large automated one.
 
 Major architectural changes must be discussed with the team before implementation.
 
@@ -49,9 +49,7 @@ We are building a **University FAQ Multi-Agent System**.
 
 A student asks a question through a web interface.
 
-The backend processes the query and routes it through an orchestration layer to the appropriate specialized agent.
-
-The selected agent uses a shared university knowledge/retrieval layer to retrieve relevant information from approved university sources.
+The backend passes the query to a single FAQ agent. That agent first classifies the query into a domain (academic / student services / general) using a lightweight routing step, then uses that domain to filter retrieval against a shared university knowledge base.
 
 The retrieved evidence is then used to generate a grounded response containing citations to the supporting source material.
 
@@ -64,9 +62,7 @@ React Client
    ↓
 FastAPI Backend
    ↓
-Agent Orchestrator
-   ↓
-Specialized Agent
+FAQ Agent (domain classification → retrieval → generation)
    ↓
 Knowledge / Retrieval Layer
    ↓
@@ -74,6 +70,8 @@ Official University Sources
    ↓
 Grounded Answer + Citations
 ```
+
+**Why one agent instead of three:** with a 5-person team and a ~5-day build window, three independently engineered agents plus an orchestrator multiplies integration and testing surface without adding grading value — "multi-agent" as a concept is satisfied by domain-aware routing and retrieval filtering inside one agent, evaluated the same way a 3-agent system would be. If time remains after the core loop works end-to-end (see Section 19), splitting into separate agent modules is a stretch goal, not a baseline requirement.
 
 ---
 
@@ -179,13 +177,13 @@ The system should handle cases such as:
 
 ---
 
-# 7. Planned Agent Responsibilities
+# 7. Agent Design: Domains and Routing
 
-> Agent boundaries are part of the architecture currently being validated and may be refined.
+The system uses **one FAQ agent** with an internal routing step, rather than separate agent processes per domain. The domains below define how queries are classified and how retrieval is filtered — not separate codebases.
 
-### 🎓 Academic Agent
+### 🎓 Academic domain
 
-Responsible for academic-policy questions such as:
+Covers:
 
 - attendance
 - examinations
@@ -194,9 +192,9 @@ Responsible for academic-policy questions such as:
 - academic calendars
 - course-related policies
 
-### 🏫 Student Services Agent
+### 🏫 Student services domain
 
-Responsible for student-life and university-service questions such as:
+Covers:
 
 - hostel rules
 - leave procedures
@@ -204,15 +202,15 @@ Responsible for student-life and university-service questions such as:
 - student facilities
 - administrative student processes
 
-### 💬 General FAQ Agent
+### 💬 General domain
 
-Handles general university questions that do not clearly belong to another specialized domain but are still supported by the approved knowledge base.
+Covers university questions that don't clearly fall into the above but are still supported by the approved knowledge base.
 
-### 🧭 Orchestrator
+### 🧭 Routing step
 
-Responsible for determining which agent should handle an incoming query.
+A lightweight classification step (prompt-based or simple intent tagging) assigns an incoming query to one of the three domains. That domain tag is used purely to filter retrieval against the knowledge base metadata — it does not invoke a separate agent. The routing step should coordinate retrieval scope rather than act as an unrestricted source of university facts.
 
-The orchestrator should coordinate routing rather than act as an unrestricted source of university facts.
+> **Stretch goal:** if the core system is working reliably well before the Sept 23 deadline, the routing step can be split into genuinely separate agent modules (see Section 21 principle: build the simplest thing that works, then improve it based on evidence).
 
 ---
 
@@ -302,15 +300,10 @@ Where possible, the knowledge pipeline should track document dates or versions.
            │
            ▼
 ┌─────────────────────┐
-│ Agent Orchestrator  │
+│      FAQ Agent      │
+│  (domain routing →  │
+│   retrieval filter) │
 └──────────┬──────────┘
-           │
-     ┌─────┼───────────┐
-     ▼     ▼           ▼
- Academic Student    General
-  Agent   Services    Agent
-          Agent
-     └─────┬───────────┘
            │
            ▼
 ┌─────────────────────┐
@@ -328,9 +321,7 @@ A detailed architecture diagram will be maintained separately as the design is f
 
 ---
 
-# 11. Planned Technology Stack
-
-> Some Azure service selections are still under architectural validation.
+# 11. Technology Stack
 
 ### Frontend
 
@@ -344,32 +335,18 @@ A detailed architecture diagram will be maintained separately as the design is f
 
 ### AI / Agent Layer
 
-Planned/under evaluation:
-
-- Microsoft Foundry
-- Microsoft Agent Framework / Foundry Agent capabilities
-- Azure-hosted language models
+- Microsoft Foundry (hosted model for generation and the FAQ agent's routing/classification step)
 
 ### Retrieval / Knowledge Layer
 
-Planned/under evaluation:
-
-- Foundry IQ
-- Azure AI Search
-- vector / semantic / hybrid retrieval as appropriate
+- Azure AI Search (index + retrieval over the university document corpus)
 
 ### Deployment
 
-Azure deployment strategy is currently being finalized.
+- Azure App Service (or equivalent simple hosting) for backend + frontend, using the Azure for Students credits already activated on the team
+- Secrets via environment variables only — never committed (see Section 17)
 
-Potential services will be selected based on:
-
-- simplicity
-- reliability
-- cost
-- project requirements
-- deployment feasibility
-- available Azure credits
+Services are locked in now rather than left open, so no build day is lost to re-deciding mid-week.
 
 ---
 
@@ -394,17 +371,12 @@ university-faq-agent/
 │   └── metadata/
 │
 ├── evaluation/
-│   ├── datasets/
-│   ├── scripts/
-│   └── results/
+│   ├── questions.md
+│   └── results.md
 │
 ├── docs/
 │   ├── architecture.md
-│   ├── decisions.md
 │   └── security.md
-│
-├── .github/
-│   └── workflows/
 │
 ├── .env.example
 ├── .gitignore
@@ -470,24 +442,21 @@ Responsibilities:
 
 Responsibilities:
 
-- student chat interface
+- student chat interface (input, send, answer, sources list)
 - API integration
-- loading states
-- error states
+- basic loading and error states
 - citation display
-- responsive interface
+
+Polish (animations, full responsive design, conversation history) is a Day 21 stretch item only — not required for the core deliverable.
 
 ### Evaluation & Reliability
 
 Responsibilities:
 
-- evaluation dataset
-- retrieval testing
-- answer-groundedness testing
-- citation testing
-- routing testing
-- adversarial/out-of-scope testing
-- reliability analysis
+- ~15–20 hand-written test questions covering: normal, ambiguous, out-of-scope, and one adversarial/prompt-injection example
+- manually running each question against the working system and recording pass/fail
+- a single results table in `evaluation/results.md` (question → expected behavior → actual result)
+- documenting known failure cases
 
 ### Deployment
 
@@ -536,10 +505,10 @@ Pull Request
      ↓
 Team Review
      ↓
-CI / Validation
-     ↓
 Merge
 ```
+
+No CI pipeline for this project — team review plus running the app locally before merge is enough at this scale and timeline.
 
 Example branch names:
 
@@ -651,18 +620,18 @@ The system should be explicitly tested for:
 
 # 19. Engineering Timeline
 
+Build actually starts **Sept 18** (not Sept 16), so the timeline is compressed against the original 8-day plan. Team members and per-person daily goals are tracked separately in `docs/team-plan.md` — this table is the milestone summary.
+
 | Date | Milestone |
 |---|---|
-| Sept 16 | Architecture + data + project foundation |
-| Sept 17 | Working RAG pipeline |
-| Sept 18 | Multi-agent integration |
-| Sept 19 | End-to-end integration |
-| Sept 20 | Engineering freeze + stabilization |
-| Sept 21 | UI/UX polish |
-| Sept 22 | Creative features + documentation + demo preparation |
-| Sept 23 | Final verification + submission |
+| Sept 18 (today) | Architecture locked (this README + `docs/architecture.md`), knowledge sources collected and classified, Azure resources activated, frontend started against mocked data |
+| Sept 19 | Working RAG pipeline: one real question → retrieved chunk → grounded answer with citation |
+| Sept 20 | Routing step added (domain classification → filtered retrieval); frontend connected to real backend |
+| Sept 21 | Full integration test pass: normal, ambiguous, out-of-scope, cross-domain, adversarial questions; fix what breaks |
+| Sept 22 | Evaluation run + results recorded; deployment; security/responsible-AI checks; polish only if core is solid |
+| Sept 23 | Final verification: clean clone, README walkthrough, video recorded, links submitted |
 
-After the engineering freeze, major architectural changes should be avoided unless required to fix a critical issue.
+After Sept 21's integration pass, avoid architectural changes unless required to fix a critical issue — remaining time goes to testing, evaluation, and the video, not new features.
 
 ---
 
@@ -695,7 +664,17 @@ while also demonstrating:
 
 ---
 
-# 21. Current Development Principle
+# 21. AI-103 Concepts Applied
+
+| AI-103 Concept | Where it lives in this project |
+|---|---|
+| Retrieval-Augmented Generation (RAG) | `backend/rag/` — ingestion, chunking, indexing, retrieval, grounded generation |
+| Agents & tools | `backend/agents/` — FAQ agent with domain-routing tool and retrieval tool |
+| Orchestration / multi-agent concept | Domain classification step inside the FAQ agent, filtering retrieval by domain (see Section 7) |
+| Responsible AI | Grounded-refusal behavior (Section 18), `docs/security.md`, `RESPONSIBLE_AI.md` |
+| Azure AI services | Microsoft Foundry (generation/routing), Azure AI Search (retrieval) — see Section 11 |
+
+# 22. Current Development Principle
 
 > Build the simplest architecture that satisfies the requirements reliably, then improve it based on evidence.
 
