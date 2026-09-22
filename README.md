@@ -1,702 +1,369 @@
-# AI-103
-University FAQ Multi-Agent - Multi-agent, RAG, orchestration Agent Framework, Foundry IQ, AI Search
-# 🎓 University FAQ Multi-Agent System
+# AI-103: University FAQ Multi-Agent System
 
 > An AI-powered university information assistant that uses multi-agent orchestration and Retrieval-Augmented Generation (RAG) to answer student questions using official university sources with grounded responses and citations.
 
 ---
 
-## 📌 Project Status
+## 📌 2. Project Status
 
-**Current Phase:** Architecture & Foundation
-
-This repository is under active development.
-
-The architecture described below represents the current agreed project direction. Some implementation details, Azure services, APIs, and agent boundaries may evolve as the architecture is validated.
-
-Major architectural changes must be discussed with the team before implementation.
-
----
-
-# 1. Problem Statement
-
-University students frequently need information about:
-
-- academic regulations
-- attendance requirements
-- examinations
-- grading policies
-- academic calendars
-- hostel rules
-- leave procedures
-- student services
-- university policies
-- administrative processes
-
-This information is often distributed across multiple official documents, PDFs, portals, notices, and web pages.
-
-Students may therefore need to search through multiple sources or contact university staff even for common questions.
-
-The goal of this project is to build an AI-powered university FAQ system capable of retrieving relevant information from approved university sources and producing clear, grounded answers with source citations.
-
-The system should avoid confidently answering questions when sufficient supporting information cannot be found.
+| Component / Feature | Current Status | Notes |
+|---|---|---|
+| **Overall Architecture & Specification** | 🟢 **Implemented** | Agreed foundational architecture & contracts defined |
+| **Frontend Chat Interface (Issue #5)** | 🟢 **Implemented (Mocked)** | React + Vite UI with all 7 visual states, ready for API swap |
+| **Azure Deployment Plan (Issue #7)** | 🟢 **Implemented (Research)** | Documented in `docs/azure-deployment.md`; no resources provisioned yet |
+| **Knowledge Base Collection (Issue #2)** | 🟡 **In Progress** | Raw directory taxonomy created; collection underway |
+| **FastAPI Backend Foundation** | 🔴 **Planned** | Python service structure to be initialized |
+| **Azure AI Search & RAG Pipeline (Issue #3)** | 🔴 **Planned** | Indexing, chunking, and semantic retrieval |
+| **Multi-Agent Orchestrator (Issue #4)** | 🔴 **Planned** | Microsoft Foundry agent orchestration & domain agents |
+| **Safety & Content Guardrails** | 🔴 **Planned** | Input validation, Prompt Shields, output grounding |
+| **Evaluation Suite (Issue #6)** | 🔴 **Planned** | Groundedness, retrieval precision, and routing benchmarks |
 
 ---
 
-# 2. Proposed Solution
+## 3. Problem Statement
 
-We are building a **University FAQ Multi-Agent System**.
+University students frequently need access to institutional policies regarding:
+- Academic regulations & grading policies
+- Attendance minimums & condonation rules
+- Examination schedules & backlog policies
+- Hostel rules, curfew timings, and gate-pass procedures
+- Leave applications & student administrative processes
 
-A student asks a question through a web interface.
+Currently, this critical information is fragmented across extensive PDF handbooks, physical notice boards, and disparate institutional portals. Consequently, students often struggle to locate current rules or overburden administrative staff.
 
-The backend processes the query and routes it through an orchestration layer to the appropriate specialized agent.
+The objective of this project is to provide a unified, conversational assistant that retrieves precise passages from **approved university sources** and generates factual answers accompanied by verifiable citations, refusing to hallucinate when information is absent.
 
-The selected agent uses a shared university knowledge/retrieval layer to retrieve relevant information from approved university sources.
+---
 
-The retrieved evidence is then used to generate a grounded response containing citations to the supporting source material.
+## 4. Proposed Solution
 
-Conceptually:
+The **University FAQ Multi-Agent System** connects students with specialized AI agents grounded in official documentation:
 
 ```text
 Student
-   ↓
-React Client
-   ↓
+   ↓ (Natural Language Query)
+React Client (Vite SPA)
+   ↓ (HTTP POST /api/ask)
 FastAPI Backend
-   ↓
-Agent Orchestrator
-   ↓
-Specialized Agent
-   ↓
-Knowledge / Retrieval Layer
-   ↓
-Official University Sources
-   ↓
+   ↓ (Query Dispatch)
+Orchestrator Agent (Microsoft Foundry)
+   ↓ (Domain Routing)
+Specialized Agent (Academic / Student Services / General FAQ)
+   ↓ (Retrieval Tool: AzureAISearchTool)
+Azure AI Search (Vector + Semantic Index)
+   ↓ (Grounded Context)
+Language Model Generation
+   ↓ (Cited Response)
 Grounded Answer + Citations
 ```
 
 ---
 
-# 3. Project Goals
+## 5. Project Goals
 
-The system should:
-
-- answer common university-related student questions
-- retrieve information from approved university sources
-- use RAG to ground generated answers
-- provide citations or source references
-- route queries to appropriate specialized agents
-- handle unsupported or out-of-scope questions safely
-- avoid fabricating university policies
-- provide a simple student-facing chat experience
-- support evaluation of retrieval and answer quality
-- demonstrate responsible AI practices
-- be deployable using Microsoft Azure services
-
-The project should demonstrate meaningful engineering rather than simply wrapping an LLM API.
+- **Grounded Responses:** Answer student queries strictly based on verified university documents.
+- **Verifiable Citations:** Accompany every answer with document names and page references.
+- **Specialized Routing:** Route domain-specific queries to dedicated agents (Academic, Student Services, General FAQ).
+- **Graceful Failure Handling:** Explicitly state when documentation is missing or ambiguous rather than fabricating answers.
+- **Responsible AI:** Integrate guardrails against prompt injection and unsafe content.
+- **Cloud-Ready:** Designed for cost-efficient deployment on Microsoft Azure.
 
 ---
 
-# 4. Non-Goals
+## 6. Non-Goals
 
-The initial version is **not** intended to:
-
-- replace official university authorities
-- make administrative decisions for students
-- modify university records
-- provide access to private student data
-- perform financial transactions
-- guarantee that every university document is current
-- answer unsupported questions using model knowledge as if they were official university policy
-
-The assistant should clearly communicate when reliable supporting information is unavailable.
+The system is **not** intended to:
+- Act as an administrative authority or grant official exceptions.
+- Mutate official student records or process financial transactions.
+- Access private student data or student grades.
+- Guess or extrapolate university policies when source documents are missing.
 
 ---
 
-# 5. Target Users
+## 7. Target Users
 
-### Primary User
+- **Primary Users:** University students seeking quick, accurate clarification on academic and campus guidelines.
+- **Secondary Users:** Faculty advisors, department coordinators, and administrative helpdesk staff querying policy documentation.
 
-**University Student**
+---
 
-Students should be able to ask natural-language questions such as:
+## 8. Core System Capabilities
+
+1. **Conversational Question Answering:** Natural language interface for querying university procedures.
+2. **Retrieval-Augmented Generation (RAG):** Context retrieval from indexed documents prior to answer synthesis.
+3. **Multi-Agent Orchestration:** Intent-based routing to specialized domain experts.
+4. **Source Attribution:** Interactive citation badges displaying source document titles and page numbers.
+5. **Failure & Uncertainty Handling:** Safe fallback messaging when evidence is insufficient.
+
+---
+
+## 9. Planned Agent Responsibilities
 
 ```text
-What is the hostel gate-pass procedure?
-
-What are the attendance requirements?
-
-How does the grading system work?
-
-What happens if I miss an examination?
-
-Where can I find information about hostel rules?
+┌─────────────────────────────────────────────────────────┐
+│                    Orchestrator Agent                   │
+│  - Analyzes intent & classifies query domain            │
+│  - Routes request to the appropriate specialized agent   │
+└──────────────┬──────────────────┬───────────────────────┘
+               │                  │
+               ▼                  ▼
+┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+│     Academic Agent     │  │ Student Services Agent │  │    General FAQ Agent   │
+│ - Attendance rules     │  │ - Hostel rules & gate  │  │ - Campus facilities    │
+│ - Exam regulations     │  │   passes               │  │ - Library timings      │
+│ - Grading & backlogs   │  │ - Leave applications   │  │ - General inquiries    │
+└────────────────────────┘  └────────────────────────┘  └────────────────────────┘
 ```
 
-### Secondary Users
-
-For the prototype, faculty or administrative users may also use the system to query the same approved knowledge base.
-
-The primary design focus remains the student experience.
-
 ---
 
-# 6. Core System Capabilities
+## 10. RAG / Knowledge Architecture
 
-The initial system is expected to support:
-
-### Question Answering
-
-Students can submit university-related questions through a conversational interface.
-
-### Retrieval-Augmented Generation
-
-Relevant information is retrieved from approved university documents before generating factual university answers.
-
-### Multi-Agent Routing
-
-Questions are routed to specialized agents based on their domain.
-
-### Grounded Responses
-
-Generated responses should be based on retrieved university information rather than unsupported model knowledge.
-
-### Source Attribution
-
-Answers should expose the supporting source/document information whenever available.
-
-### Failure Handling
-
-The system should handle cases such as:
-
-- no relevant information found
-- ambiguous questions
-- conflicting sources
-- potentially outdated documents
-- out-of-scope questions
-- retrieval failures
-- model/service failures
-
----
-
-# 7. Planned Agent Responsibilities
-
-> Agent boundaries are part of the architecture currently being validated and may be refined.
-
-### 🎓 Academic Agent
-
-Responsible for academic-policy questions such as:
-
-- attendance
-- examinations
-- grading
-- academic regulations
-- academic calendars
-- course-related policies
-
-### 🏫 Student Services Agent
-
-Responsible for student-life and university-service questions such as:
-
-- hostel rules
-- leave procedures
-- campus services
-- student facilities
-- administrative student processes
-
-### 💬 General FAQ Agent
-
-Handles general university questions that do not clearly belong to another specialized domain but are still supported by the approved knowledge base.
-
-### 🧭 Orchestrator
-
-Responsible for determining which agent should handle an incoming query.
-
-The orchestrator should coordinate routing rather than act as an unrestricted source of university facts.
-
----
-
-# 8. RAG / Knowledge Architecture
-
-The planned retrieval pipeline is:
+The planned RAG pipeline processes approved institutional documents as follows:
 
 ```text
-Official University Sources
-        ↓
-Document Collection
-        ↓
-Extraction / Parsing
-        ↓
-Cleaning
-        ↓
-Chunking
-        ↓
-Metadata Enrichment
-        ↓
-Indexing / Embeddings
-        ↓
-Retrieval
-        ↓
-Relevant Context
-        ↓
-LLM / Agent
-        ↓
-Grounded Answer
-        ↓
-Citation / Source Attribution
+Official University Sources (PDFs / Notices)
+         ↓
+Document Extraction & Text Cleaning
+         ↓
+Semantic Chunking & Metadata Enrichment (Document, Section, Page, Year)
+         ↓
+Vector Embeddings Generation
+         ↓
+Azure AI Search (Hybrid Vector + Keyword Index)
+         ↓
+AzureAISearchTool Retrieval via Specialized Agent
+         ↓
+LLM Synthesis with Grounding System Prompt
+         ↓
+Grounded Answer with Extracted Citations
 ```
 
-Important metadata may include:
+---
 
-- document title
-- source URL
-- document category
-- publication/version date
-- collection date
-- section/page information
-- currentness/verification status
+## 11. Knowledge Source Policy
 
-Exact chunking, retrieval, ranking, embedding, and indexing strategies will be documented as the RAG architecture is finalized.
+- **Approved Sources Only:** Answers must originate from official university documentation (Academic Handbooks, Examination Bye-Laws, Hostel Rules).
+- **Metadata Preservation:** Every indexed passage must retain its document name, publication date, and page number.
+- **Version Awareness:** When policies change across academic years, the latest verified version takes precedence.
 
 ---
 
-# 9. Knowledge Source Policy
-
-University factual answers should be grounded in **approved university sources** whenever possible.
-
-Potential sources include:
-
-- official university PDFs
-- academic regulations
-- examination policies
-- hostel regulations
-- academic calendars
-- official FAQ pages
-- official university webpages
-- approved notices and policy documents
-
-Each collected source should preserve enough metadata to identify where the information originated.
-
-Documents should not automatically be assumed to be current merely because they are official.
-
-Where possible, the knowledge pipeline should track document dates or versions.
-
----
-
-# 10. High-Level Architecture
+## 12. High-Level Architecture
 
 ```text
-┌─────────────────────┐
-│       Student       │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│    React Frontend   │
-└──────────┬──────────┘
-           │ HTTP/API
-           ▼
-┌─────────────────────┐
-│   FastAPI Backend   │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Agent Orchestrator  │
-└──────────┬──────────┘
-           │
-     ┌─────┼───────────┐
-     ▼     ▼           ▼
- Academic Student    General
-  Agent   Services    Agent
-          Agent
-     └─────┬───────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Knowledge/RAG Layer │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Approved University │
-│       Sources       │
-└─────────────────────┘
+┌────────────────────────┐
+│     Student User       │
+└───────────┬────────────┘
+            │
+            ▼
+┌────────────────────────┐
+│ React Frontend (Vite)  │  [Status: Implemented / Mocked]
+└───────────┬────────────┘
+            │ HTTP /api/ask
+            ▼
+┌────────────────────────┐
+│    FastAPI Backend     │  [Status: Planned]
+└───────────┬────────────┘
+            │
+            ▼
+┌────────────────────────┐
+│   Orchestrator Agent   │  [Status: Planned - Microsoft Foundry]
+└───────────┬────────────┘
+     ┌──────┴──────────────────────────┐
+     ▼                                 ▼
+┌────────────────────────┐   ┌────────────────────────┐
+│   Academic Agent       │   │ Student Services Agent │  [Status: Planned]
+└───────────┬────────────┘   └─────────┬──────────────┘
+            │                          │
+            └───────────┬──────────────┘
+                        │ AzureAISearchTool
+                        ▼
+            ┌────────────────────────┐
+            │   Azure AI Search      │  [Status: Planned - RAG Index]
+            └───────────┬────────────┘
+                        │
+                        ▼
+            ┌────────────────────────┐
+            │  Official Knowledge    │  [Status: In Progress]
+            └────────────────────────┘
 ```
-
-A detailed architecture diagram will be maintained separately as the design is finalized.
 
 ---
 
-# 11. Planned Technology Stack
-
-> Some Azure service selections are still under architectural validation.
+## 13. Technology Stack
 
 ### Frontend
+- **Framework:** React 19 + Vite
+- **Styling:** Vanilla CSS with custom design tokens (Dark Academic Theme)
+- **State Management:** React Hooks (`useState`, `useEffect`, `useRef`)
 
-- React
-- Vite
+### Backend (Planned)
+- **Framework:** Python 3.11+ / FastAPI
+- **SDKs:** `azure-ai-projects`, `azure-identity` (`DefaultAzureCredential`)
 
-### Backend
+### AI & Retrieval Layer (Planned)
+- **Agent Platform:** Microsoft Foundry Agent Framework
+- **Retrieval Engine:** Azure AI Search (`AzureAISearchTool`)
+- **Foundational Models:** Azure OpenAI (GPT-4o / GPT-4o-mini)
 
-- Python
-- FastAPI
+### Safety & Guardrails (Planned)
+- **Content Moderation:** Azure AI Content Safety
+- **Prompt Shielding:** Protection against prompt injection and jailbreaks
 
-### AI / Agent Layer
-
-Planned/under evaluation:
-
-- Microsoft Foundry
-- Microsoft Agent Framework / Foundry Agent capabilities
-- Azure-hosted language models
-
-### Retrieval / Knowledge Layer
-
-Planned/under evaluation:
-
-- Foundry IQ
-- Azure AI Search
-- vector / semantic / hybrid retrieval as appropriate
-
-### Deployment
-
-Azure deployment strategy is currently being finalized.
-
-Potential services will be selected based on:
-
-- simplicity
-- reliability
-- cost
-- project requirements
-- deployment feasibility
-- available Azure credits
+### Deployment & DevOps
+- **Frontend Hosting:** Azure Static Web Apps (Planned)
+- **Backend Hosting:** Azure App Service (Planned)
+- **Secrets Management:** Azure Key Vault (Planned)
+- **CI/CD:** GitHub Actions (Planned)
 
 ---
 
-# 12. Proposed Repository Structure
+## 14. Repository Structure
 
 ```text
-university-faq-agent/
+AI-103/
+├── backend/                  # (Planned) FastAPI application & agent implementations
+│   ├── api/                  # API routes and request schemas
+│   ├── agents/               # Orchestrator and specialized agent definitions
+│   ├── rag/                  # Document processing and search tool integrations
+│   ├── services/             # Core business logic
+│   ├── config.py             # App configuration and environment variable loading
+│   └── main.py               # FastAPI entry point
 │
-├── backend/
-│   ├── api/
-│   ├── agents/
-│   ├── rag/
-│   ├── services/
-│   ├── models/
-│   └── tests/
+├── frontend/                 # (Implemented) React + Vite client
+│   ├── src/
+│   │   ├── components/       # UI components (ChatInput, MessageBubble, SourceCard, etc.)
+│   │   ├── pages/            # Page layouts (ChatPage.jsx)
+│   │   ├── services/         # API abstraction layer (mockApi.js)
+│   │   ├── App.css           # Custom theme design tokens and styles
+│   │   └── main.jsx          # React mount entry point
+│   ├── index.html
+│   └── package.json
 │
-├── frontend/
+├── knowledge/                # (In Progress) Official institutional knowledge base
+│   ├── raw/                  # Source documents (academic, general, student-services)
+│   ├── processed/            # Cleaned and chunked text ready for indexing
+│   └── metadata/             # Source manifests, versioning, and provenance
 │
-├── knowledge/
-│   ├── raw/
-│   ├── processed/
-│   └── metadata/
+├── evaluation/               # (Planned) Test datasets, retrieval metrics, and benchmarks
 │
-├── evaluation/
-│   ├── datasets/
-│   ├── scripts/
-│   └── results/
+├── docs/                     # Project technical documentation
+│   ├── azure-deployment.md   # (Implemented) Azure architecture and deployment plan
+│   ├── architecture.md       # Detailed system design specifications
+│   └── security.md           # Security and responsible AI guidelines
 │
-├── docs/
-│   ├── architecture.md
-│   ├── decisions.md
-│   └── security.md
-│
-├── .github/
-│   └── workflows/
-│
-├── .env.example
 ├── .gitignore
-├── CLAUDE.md
-└── README.md
+└── README.md                 # Project source of truth
 ```
 
-The structure may evolve as implementation begins, but significant structural changes should be discussed before being introduced.
+---
+
+## 15. Team Responsibilities
+
+| Area | Lead Focus | Key Deliverables |
+|---|---|---|
+| **Frontend & UI (Issue #5)** | Student Chat Interface | React/Vite chat page, state management, citation cards, mock API |
+| **Deployment (Issue #7)** | Azure Infrastructure | Deployment research, resource planning, Key Vault integration |
+| **Knowledge Base (Issue #2)** | Document Pipeline | Collecting handbooks, metadata schema, cleaning & chunking |
+| **RAG & Search (Issue #3)** | Retrieval Engine | Azure AI Search vector indexing, hybrid search, retrieval evaluation |
+| **Multi-Agent System (Issue #4)**| Agent Orchestration | Microsoft Foundry agents, prompt engineering, domain routing |
+| **Evaluation & QA (Issue #6)** | System Benchmarking | Groundedness tests, citation validation, adversarial safety tests |
 
 ---
 
-# 13. Team Responsibilities
+## 16. Development Workflow
 
-The project is divided into the following engineering areas.
-
-### Architecture & Requirements
-
-Responsibilities:
-
-- overall system architecture
-- requirements
-- RAG architecture
-- Azure architecture
-- API/component boundaries
-- technical decisions and trade-offs
-- integration review
-
-### Knowledge Base
-
-Responsibilities:
-
-- collect official university sources
-- validate source quality
-- preserve source metadata
-- identify potentially outdated/conflicting documents
-- maintain the knowledge manifest
-
-### RAG & Retrieval
-
-Responsibilities:
-
-- document extraction
-- cleaning
-- chunking
-- metadata
-- indexing
-- retrieval
-- source attribution
-- retrieval failure handling
-
-### Multi-Agent System
-
-Responsibilities:
-
-- specialized agents
-- orchestrator
-- routing
-- agent instructions
-- knowledge integration
-- fallback behavior
-
-### Frontend
-
-Responsibilities:
-
-- student chat interface
-- API integration
-- loading states
-- error states
-- citation display
-- responsive interface
-
-### Evaluation & Reliability
-
-Responsibilities:
-
-- evaluation dataset
-- retrieval testing
-- answer-groundedness testing
-- citation testing
-- routing testing
-- adversarial/out-of-scope testing
-- reliability analysis
-
-### Deployment
-
-Responsibilities:
-
-- Azure resources
-- application deployment
-- configuration
-- environment variables
-- CI/CD
-- health checks
-
-### Security & Responsible AI
-
-Responsibilities:
-
-- prompt-injection considerations
-- grounding
-- unsupported-answer handling
-- secrets management
-- privacy considerations
-- transparency
-- limitations
-- human oversight
-
----
-
-# 14. Development Workflow
-
-The `main` branch represents reviewed and approved project work.
-
-Development should follow:
+All contributions adhere to a structured Git workflow:
 
 ```text
-GitHub Issue
-     ↓
-Feature Branch
-     ↓
-Implementation
-     ↓
-Local Testing
-     ↓
-Self Review
-     ↓
-Pull Request
-     ↓
-Team Review
-     ↓
-CI / Validation
-     ↓
-Merge
+GitHub Issue Assigned
+         ↓
+Create Feature Branch (e.g. feature/proch)
+         ↓
+Local Implementation & Testing
+         ↓
+Pull Request against main
+         ↓
+Peer Code Review & Automated CI Checks
+         ↓
+Merge into main
 ```
 
-Example branch names:
-
-```text
-feature/2-knowledge-base
-feature/3-rag
-feature/4-multi-agent
-feature/5-frontend
-feature/6-evaluation
-feature/7-deployment
-```
-
-Do **not** work directly on `main`.
+> **Safety Rule:** Direct commits to `main` are strictly prohibited. Development occurs on dedicated feature branches.
 
 ---
 
-# 15. Pull Request Expectations
+## 17. Pull Request Expectations
 
-Every significant PR should explain:
-
-- what changed
-- why it changed
-- how it was tested
-- dependencies introduced
-- known limitations
-- screenshots/logs/results where relevant
-
-Code should not be merged simply because it runs.
-
-Review should consider:
-
-- correctness
-- architecture consistency
-- maintainability
-- security
-- error handling
-- tests
-- API compatibility
-- configuration
-- unnecessary dependencies
-- duplicated/dead code
+Every pull request must document:
+- Purpose of the change and associated Issue number
+- Implementation details and architectural decisions
+- Verification evidence (build logs, local test results, screenshots)
+- Any new dependencies introduced and their rationale
 
 ---
 
-# 16. AI-Assisted Development Policy
+## 18. AI-Assisted Development Policy
 
-AI coding assistants may be used to help:
-
-- understand unfamiliar concepts
-- implement approved designs
-- debug
-- refactor
-- generate tests
-- review code
-- research alternatives
-
-However:
-
-> **No team member should submit or merge code they cannot explain.**
-
-AI assistants should not independently redefine the project's architecture.
-
-Major changes involving architecture, services, APIs, dependencies, agent responsibilities, or data contracts should be discussed with the team first.
+AI tools may assist in code generation, refactoring, and test creation under the following strict rule:
+> **No team member may commit code that they cannot explain.**
+Every engineer must understand and be ready to defend their implementation during evaluations.
 
 ---
 
-# 17. Security Rules
+## 19. Security Rules
 
-### Never commit:
-
-```text
-API keys
-access tokens
-passwords
-connection strings
-private credentials
-.env files containing secrets
-```
-
-Use environment variables for configuration.
-
-A `.env.example` may document required variable names but must contain no real credentials.
-
-If a credential is accidentally committed, notify the team immediately so it can be revoked/rotated.
+- **Zero Secret Commits:** Never commit `.env` files, API keys, or connection strings to git.
+- **Default Azure Credentials:** Use `DefaultAzureCredential` and Azure Key Vault for production credentials.
+- **Input Sanitization:** Sanitize all user inputs before dispatching to agents.
 
 ---
 
-# 18. Reliability Principles
+## 20. Reliability Principles
 
-The assistant should prefer:
-
-> "I couldn't find reliable information in the approved university sources."
-
-over inventing a university rule.
-
-The system should be explicitly tested for:
-
-- unsupported questions
-- missing information
-- ambiguous questions
-- conflicting information
-- outdated sources
-- incorrect routing
-- retrieval failures
-- incorrect citations
-- prompt injection attempts
+- **Prefer Honesty over Fabrication:** The assistant must reply *"I could not find reliable information in the approved sources"* rather than guessing.
+- **Explicit Grounding:** Answers without matching source citations are rejected by guardrails.
 
 ---
 
-# 19. Engineering Timeline
+## 21. Engineering Timeline
 
-| Date | Milestone |
-|---|---|
-| Sept 16 | Architecture + data + project foundation |
-| Sept 17 | Working RAG pipeline |
-| Sept 18 | Multi-agent integration |
-| Sept 19 | End-to-end integration |
-| Sept 20 | Engineering freeze + stabilization |
-| Sept 21 | UI/UX polish |
-| Sept 22 | Creative features + documentation + demo preparation |
-| Sept 23 | Final verification + submission |
-
-After the engineering freeze, major architectural changes should be avoided unless required to fix a critical issue.
+| Milestone | Target Date | Scope | Status |
+|---|---|---|---|
+| M1: Foundation | Sept 16 | Specification, Architecture, & Repository Scaffolding | 🟢 Completed |
+| M2: Frontend & Docs | Sept 20 | React Chat UI (Mocked) & Azure Deployment Plan | 🟢 Completed |
+| M3: RAG & Knowledge | Sept 21 | Knowledge ingestion & Azure AI Search indexing | 🟡 In Progress |
+| M4: Multi-Agent Backend | Sept 22 | Foundry Agent Orchestrator & FastAPI endpoints | 🔴 Planned |
+| M5: End-to-End Freeze | Sept 23 | API integration, Evaluation, & Final Demo | 🔴 Planned |
 
 ---
 
-# 20. Definition of Project Success
+## 22. Definition of Project Success
 
-The project is successful when we can demonstrate:
-
-```text
-Student Question
-       ↓
-Correct Routing
-       ↓
-Relevant Official Information Retrieved
-       ↓
-Grounded Answer Generated
-       ↓
-Supporting Sources Displayed
-```
-
-while also demonstrating:
-
-- reliable failure handling
-- clear architecture
-- modular implementation
-- evaluation evidence
-- responsible AI practices
-- secure configuration
-- deployability
-- technical decisions the entire team can explain
+The project succeeds when an end-to-end question flow is verified:
+1. Student asks a query on the frontend.
+2. Orchestrator accurately routes to the specialized agent.
+3. Azure AI Search retrieves the correct document chunk.
+4. LLM synthesizes an accurate answer citing exact page numbers.
+5. Out-of-scope or unverified questions trigger a safe, polite fallback.
 
 ---
 
-# 21. Current Development Principle
+## 23. AI-103 Concepts Applied
 
-> Build the simplest architecture that satisfies the requirements reliably, then improve it based on evidence.
+This project synthesizes core AI and Cloud engineering principles covered in AI-103:
 
-The project should demonstrate engineering depth through **correct design, retrieval quality, orchestration, evaluation, reliability and explainability**, rather than unnecessary complexity.
+- **Multi-Agent Systems:** Intent classification, dynamic routing, and domain separation using Microsoft Foundry.
+- **Retrieval-Augmented Generation (RAG):** Overcoming LLM knowledge cutoffs and hallucinations using external indexed search.
+- **Vector & Semantic Search:** Azure AI Search with dense embeddings and semantic re-ranking for institutional retrieval.
+- **Responsible AI & Prompt Shields:** Guardrails against prompt injection and hallucinated academic regulations.
+- **Cloud Architecture & Managed Identity:** Secure authentication using `DefaultAzureCredential` and Azure Key Vault without embedded credentials.
+
+---
+
+## 24. Current Development Principle
+
+> **Build the simplest architecture that satisfies the requirements reliably, then improve it based on evidence.**
+
+Avoid unnecessary cloud resources, excessive frameworks, or premature complexity.

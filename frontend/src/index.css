@@ -1,0 +1,233 @@
+/* ==========================================================================
+   University FAQ Assistant — Design Tokens & Core Baseline
+   Theme: Academic Elegance & Modern Conversational Interface
+   ========================================================================== */
+
+:root {
+  /* --- Typography --- */
+  --font-serif: 'Fraunces', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.68;
+  --line-height-heading: 1.25;
+
+  /* --- Light Palette (Academic Warm Ivory & Deep Navy) --- */
+  --bg-app: #FAF8F3;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #FFFFFF;
+  --bg-surface-subtle: #F3EFE6;
+  --bg-surface-hover: #ECE7DC;
+  
+  --bg-sidebar: #0F1B3D;
+  --bg-sidebar-hover: #172855;
+  --bg-sidebar-active: #1D3168;
+  --text-sidebar-primary: #FAF8F3;
+  --text-sidebar-secondary: #9BA8C4;
+  --border-sidebar: rgba(255, 255, 255, 0.08);
+
+  --color-navy: #0F1B3D;
+  --color-navy-dark: #080E21;
+  --color-navy-light: #1A2E66;
+  --color-navy-muted: rgba(15, 27, 61, 0.06);
+
+  --color-gold: #B8975A;
+  --color-gold-hover: #A58448;
+  --color-gold-light: #F7F3E9;
+  --color-gold-border: rgba(184, 151, 90, 0.35);
+  --color-gold-glow: rgba(184, 151, 90, 0.16);
+
+  --text-primary: #0F1B3D;
+  --text-secondary: #5A667E;
+  --text-muted: #8491A5;
+  --text-inverse: #FAF8F3;
+
+  --border-subtle: rgba(15, 27, 61, 0.08);
+  --border-medium: rgba(15, 27, 61, 0.14);
+  --border-strong: rgba(15, 27, 61, 0.24);
+
+  --user-bubble-bg: #0F1B3D;
+  --user-bubble-text: #FAF8F3;
+
+  /* --- Agent Badges --- */
+  --agent-academic-bg: #EEF2FF;
+  --agent-academic-text: #1E40AF;
+  --agent-academic-border: rgba(30, 64, 175, 0.2);
+
+  --agent-services-bg: #ECFDF5;
+  --agent-services-text: #065F46;
+  --agent-services-border: rgba(6, 95, 70, 0.2);
+
+  --agent-general-bg: #F7F3E9;
+  --agent-general-text: #85611E;
+  --agent-general-border: rgba(184, 151, 90, 0.3);
+
+  /* --- Alerts & Utilities --- */
+  --color-error-bg: #FFF1F2;
+  --color-error-border: #FECDD3;
+  --color-error-text: #9F1239;
+
+  /* --- Elevation & Shadows --- */
+  --shadow-xs: 0 1px 2px rgba(15, 27, 61, 0.04);
+  --shadow-sm: 0 2px 6px rgba(15, 27, 61, 0.05);
+  --shadow-md: 0 4px 16px -2px rgba(15, 27, 61, 0.07), 0 2px 6px -1px rgba(15, 27, 61, 0.03);
+  --shadow-lg: 0 10px 30px -4px rgba(15, 27, 61, 0.09), 0 4px 12px -2px rgba(15, 27, 61, 0.04);
+  --shadow-composer: 0 8px 32px -4px rgba(15, 27, 61, 0.09), 0 2px 8px rgba(15, 27, 61, 0.03);
+
+  /* --- Border Radii --- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* --- Transitions --- */
+  --transition-fast: 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Dark Theme Tokens (Deep Navy Based, not pure black) --- */
+[data-theme="dark"] {
+  --bg-app: #0A1124;
+  --bg-surface: #101B38;
+  --bg-surface-elevated: #16244A;
+  --bg-surface-subtle: #131F3F;
+  --bg-surface-hover: #1C2D5C;
+
+  --bg-sidebar: #060B18;
+  --bg-sidebar-hover: #0E172F;
+  --bg-sidebar-active: #152244;
+  --text-sidebar-primary: #F8FAFC;
+  --text-sidebar-secondary: #8E9BB5;
+  --border-sidebar: rgba(255, 255, 255, 0.07);
+
+  --color-navy: #FAF8F3;
+  --color-navy-dark: #FFFFFF;
+  --color-navy-light: #E2E8F0;
+  --color-navy-muted: rgba(255, 255, 255, 0.06);
+
+  --color-gold: #D4AF37;
+  --color-gold-hover: #E2C054;
+  --color-gold-light: rgba(212, 175, 55, 0.12);
+  --color-gold-border: rgba(212, 175, 55, 0.32);
+  --color-gold-glow: rgba(212, 175, 55, 0.2);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #9FB0CC;
+  --text-muted: #6C7D9B;
+  --text-inverse: #0A1124;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.22);
+
+  --user-bubble-bg: #1B2D5D;
+  --user-bubble-text: #FFFFFF;
+
+  --agent-academic-bg: rgba(59, 130, 246, 0.14);
+  --agent-academic-text: #93C5FD;
+  --agent-academic-border: rgba(96, 165, 250, 0.28);
+
+  --agent-services-bg: rgba(16, 185, 129, 0.14);
+  --agent-services-text: #6EE7B7;
+  --agent-services-border: rgba(52, 211, 153, 0.28);
+
+  --agent-general-bg: rgba(212, 175, 55, 0.14);
+  --agent-general-text: #FDE047;
+  --agent-general-border: rgba(212, 175, 55, 0.3);
+
+  --color-error-bg: rgba(225, 29, 72, 0.12);
+  --color-error-border: rgba(244, 63, 94, 0.3);
+  --color-error-text: #FDA4AF;
+
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px -3px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 36px -4px rgba(0, 0, 0, 0.55);
+  --shadow-composer: 0 10px 40px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* --- Global Reset & Box Model --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: var(--line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+/* --- Typography Baseline --- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: var(--line-height-heading);
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font-family: var(--font-sans);
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+button:focus-visible, a:focus-visible, textarea:focus-visible, input:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* --- Scrollbar Styling --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* --- Accessibility: Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
