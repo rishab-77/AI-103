@@ -183,10 +183,24 @@ def load_knowledge_base() -> int:
     return len(_knowledge_chunks)
 
 
+# Common English stop words to exclude from generic token matching
+STOP_WORDS = {
+    "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "with",
+    "of", "by", "from", "as", "is", "am", "are", "was", "were", "be", "been",
+    "being", "have", "has", "had", "do", "does", "did", "will", "would", "shall",
+    "should", "may", "might", "can", "could", "must", "it", "its", "it's", "this",
+    "that", "these", "those", "i", "you", "he", "she", "we", "they", "me", "him",
+    "her", "us", "them", "what", "which", "who", "whom", "where", "when", "why",
+    "how", "all", "any", "both", "each", "few", "more", "most", "other", "some",
+    "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very",
+    "s", "t", "just", "don", "now", "tell", "give", "please", "about"
+}
+
+
 def search_knowledge(query: str, category: Optional[str] = None, top_k: int = 5) -> RetrievalResult:
     """
-    Search the knowledge base using keyword matching.
-    Ranks chunks by relevance score based on term overlap with the query.
+    Search the knowledge base using keyword matching with stop-word filtering
+    and semantic frequency scoring.
     """
     if not _is_loaded:
         load_knowledge_base()
@@ -194,11 +208,18 @@ def search_knowledge(query: str, category: Optional[str] = None, top_k: int = 5)
     if not _knowledge_chunks:
         return RetrievalResult(query=query)
 
-    # Tokenize query
-    query_terms = set(re.findall(r'\b\w{3,}\b', query.lower()))
+    # Tokenize query, separating informative keywords from stop words
+    all_raw_terms = re.findall(r'\b\w{2,}\b', query.lower())
+    query_terms = [t for t in all_raw_terms if t not in STOP_WORDS and len(t) >= 3]
+
+    if not query_terms:
+        # Fall back to raw terms if all were filtered
+        query_terms = [t for t in all_raw_terms if len(t) >= 3]
 
     if not query_terms:
         return RetrievalResult(query=query)
+
+    query_term_set = set(query_terms)
 
     scored_chunks = []
     for chunk in _knowledge_chunks:
@@ -207,26 +228,40 @@ def search_knowledge(query: str, category: Optional[str] = None, top_k: int = 5)
             continue
 
         chunk_lower = chunk.text.lower()
-        chunk_terms = set(re.findall(r'\b\w{3,}\b', chunk_lower))
 
-        # Score = number of matching terms + bonus for exact phrase fragments
-        matching_terms = query_terms & chunk_terms
-        score = len(matching_terms)
+        # Count term frequencies and matches
+        matched_unique = 0
+        total_occurrences = 0
+        for term in query_term_set:
+            count = chunk_lower.count(term)
+            if count > 0:
+                matched_unique += 1
+                total_occurrences += count
 
-        # Bonus: check for multi-word phrase matches from query
-        for term in query_terms:
-            if term in chunk_lower:
-                score += 0.5
+        if matched_unique == 0:
+            continue
 
-        # Bonus: check for consecutive query words appearing together
-        query_words = query.lower().split()
+        # Score formula:
+        # 1. Base score: fraction of distinct query terms matched (heavily rewards matching ALL keywords)
+        score = (matched_unique / len(query_term_set)) * 10.0
+
+        # 2. Add occurrence count factor (capped to avoid long chunk bias)
+        score += min(total_occurrences, 8) * 0.5
+
+        # 3. Bigram exact phrase match bonus
+        query_words = [w for w in all_raw_terms if w not in STOP_WORDS]
         for i in range(len(query_words) - 1):
             bigram = f"{query_words[i]} {query_words[i + 1]}"
             if bigram in chunk_lower:
-                score += 2.0
+                score += 3.0
 
-        if score > 0:
-            scored_chunks.append((score, chunk))
+        # 4. Trigram exact phrase match bonus
+        for i in range(len(query_words) - 2):
+            trigram = f"{query_words[i]} {query_words[i + 1]} {query_words[i + 2]}"
+            if trigram in chunk_lower:
+                score += 5.0
+
+        scored_chunks.append((score, chunk))
 
     # Sort by score descending and take top_k
     scored_chunks.sort(key=lambda x: x[0], reverse=True)
