@@ -19,6 +19,17 @@ app.add_middleware(
 
 app.include_router(router)
 
+@app.get("/", summary="Root API Index")
+def root():
+    return {
+        "status": "online",
+        "service": "University FAQ Multi-Agent Backend",
+        "docs": "/docs",
+        "health": "/health",
+        "ask_endpoint": "/api/v1/ask",
+        "frontend": "http://127.0.0.1:5173"
+    }
+
 @app.get("/health", summary="System Health Check")
 def health_check():
     return {"status": "online", "service": "University FAQ Multi-Agent Backend"}

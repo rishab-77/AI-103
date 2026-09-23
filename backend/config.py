@@ -6,9 +6,13 @@ from typing import Optional
 load_dotenv()
 
 class Settings(BaseSettings):
+    # Azure AI Foundry / Project Client
+    PROJECT_CONNECTION_STRING: Optional[str] = None
+    MODEL_DEPLOYMENT_NAME: str = "gpt-4o-mini"
+
     # Gemini Key & Model
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-flash-latest"
 
     # Azure OpenAI Key & Endpoint
     AZURE_OPENAI_API_KEY: Optional[str] = None
@@ -23,6 +27,7 @@ class Settings(BaseSettings):
     AI_SEARCH_ENDPOINT: Optional[str] = None
     AI_SEARCH_KEY: Optional[str] = None
     AI_SEARCH_INDEX_NAME: str = "university-knowledge"
+    AI_SEARCH_CONNECTION_ID: Optional[str] = None
 
     # Azure Content Safety (Optional)
     CONTENT_SAFETY_ENDPOINT: Optional[str] = None

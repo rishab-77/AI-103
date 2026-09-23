@@ -3,7 +3,7 @@ import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 import ChatWindow from "../components/ChatWindow";
 import DisclaimerModal from "../components/DisclaimerModal";
-import { askQuestion } from "../services/mockChatService";
+import { askQuestion } from "../services/apiService";
 
 const STORAGE_CONVERSATIONS_KEY = "ai103_conversations";
 const STORAGE_THEME_KEY = "ai103_theme";
